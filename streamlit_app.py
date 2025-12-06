@@ -1,93 +1,71 @@
 import os
-import pandas as pd
 import random
 import streamlit as st
-import requests
 import traceback
+
+# NOTA: Comentamos las importaciones de pandas y requests
+# import pandas as pd 
+# import requests 
 
 # =========================
 # Diagnóstico inicial
 # =========================
-st.header("Diagnóstico rápido")
+st.header("Diagnóstico rápido (Prueba de Aislamiento)")
 st.write("Python version:", os.sys.version)
 st.write("Working dir:", os.getcwd())
 st.write("Archivos en raíz:", os.listdir("."))
 
-# Diagnóstico adicional para la carpeta 'main'
+# Diagnóstico adicional para la carpeta 'main' (para verificar el clon de Git)
 try:
     st.write("Archivos en 'main':", os.listdir("main/"))
 except FileNotFoundError:
     st.write("La carpeta 'main' no existe.")
+except NotADirectoryError:
+    st.write("El archivo 'main' no es una carpeta.")
 
 HF_TOKEN = os.getenv("HF_TOKEN")
-st.write("HF_TOKEN presente:", bool(HF_TOKEN))
+st.write("HF_TOKEN presente (debe ser True):", bool(HF_TOKEN))
 
-# RUTA CORREGIDA: Asumiendo que el archivo está dentro de 'main/'
-csv_path = "main/poems_clean.csv" 
-st.write("CSV existe:", os.path.exists(csv_path))
-try:
-    df = pd.read_csv(csv_path)
-    st.write("CSV cargado: filas =", len(df))
-except Exception as e:
-    st.error(f"Error leyendo CSV: {e}")
-    df = None
+# COMENTAMOS LA LECTURA DEL CSV
+# csv_path = "main/poems_clean.csv" 
+# st.write("CSV existe (Ignorado para la prueba):", os.path.exists(csv_path))
+# df = None # Establecemos df a None para no usarlo
 
 # =========================
-# Configuración del modelo
+# Configuración del modelo (Solo constantes, no se usa la función)
 # =========================
-# Usa Mistral temporalmente para reducir latencia, aunque el bloque estará comentado
 MODEL_ID = "meta-llama/Meta-Llama-3-8B-Instruct" 
 API_URL = f"https://api-inference.huggingface.co/models/{MODEL_ID}"
 
-def hf_generate(prompt, max_tokens=300, temperature=0.9):
-    """Cliente HTTP para Hugging Face API"""
-    headers = {"Authorization": f"Bearer {HF_TOKEN}"}
-    payload = {
-        "inputs": prompt,
-        "parameters": {
-            "max_new_tokens": max_tokens,
-            "temperature": temperature,
-        }
-    }
-    # Aumentar el manejo de posibles Timeouts
-    try:
-        resp = requests.post(API_URL, headers=headers, json=payload, timeout=120)
-        resp.raise_for_status()
-    except requests.exceptions.Timeout:
-        st.error("Error: La solicitud a Hugging Face ha excedido el tiempo de espera (Timeout).")
-        return "ERROR DE TIMEOUT" # Retorna un mensaje de error
-    
-    data = resp.json()
-    # Manejo flexible de la respuesta
-    if isinstance(data, list) and data and "generated_text" in data[0]:
-        return data[0]["generated_text"]
-    if isinstance(data, dict) and "generated_text" in data:
-        return data["generated_text"]
-    return str(data)
+# COMENTAMOS la función de generación ya que no se usa en esta prueba
+# def hf_generate(prompt, max_tokens=300, temperature=0.9):
+#    pass 
 
 # =========================
 # Interfaz Streamlit
 # =========================
-st.title("📝 IA Generativa de Poemas en Español")
+st.title("📝 IA Generativa de Poemas en Español (Mínimo)")
 
 st.markdown("""
-Esta aplicación utiliza un modelo de **IA (Meta-Llama-3-8B-Instruct)** para generar poemas originales en español.  
-... (resto de la descripción de la interfaz)
+Esta es una **prueba de carga mínima** para descartar problemas de archivos (CSV) 
+o de conexión a Hugging Face.
 """)
 
-tema = st.text_input("Tema del poema")
+st.subheader("Resultado de la Prueba:")
+st.success("Si ves este texto, Streamlit está funcionando en la nube.")
+
+tema = st.text_input("Tema del poema (Ignorado)")
 estilo = st.selectbox(
-    "Estilo",
-    ["Verso libre","Soneto","Haiku","Romance","Décima","Oda",
-     "Copla","Elegía","Égloga","Lira","Redondilla"]
+    "Estilo (Ignorado)",
+    ["Verso libre","Soneto","Haiku","Romance"]
 )
+
+if st.button("Generar poema"):
+    st.info("El bloque de generación de poemas está **desactivado** para esta prueba de diagnóstico. Si ves este mensaje, la aplicación se cargó correctamente.")
 
 # ----------------------------------------------------
 # Bloque de generación de poema (COMENTADO TEMPORALMENTE)
 # ----------------------------------------------------
-if st.button("Generar poema"):
-    st.info("La función de generación está actualmente comentada para propósitos de diagnóstico.")
-    st.info("Si la aplicación carga hasta aquí, el problema está en la conexión con Hugging Face (latencia o permisos del modelo).")
     
     # try:
     #     if not HF_TOKEN:
