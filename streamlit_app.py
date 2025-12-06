@@ -9,7 +9,7 @@ import traceback
 # CONFIGURACIÓN DE LA PÁGINA Y ESTILOS
 # =========================
 st.set_page_config(
-    page_title="Generador de Poemas IA",
+    page_title="Generador de Poemas con IA",
     page_icon="✍️",
     layout="wide", # Usa todo el ancho de la pantalla
 )
