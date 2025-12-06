@@ -11,7 +11,7 @@ import traceback
 st.set_page_config(
     page_title="Generador de Poemas con IA",
     page_icon="✍️",
-    layout="wide", # Usa todo el ancho de la pantalla
+    layout="wide",
 )
 
 # =========================
@@ -21,8 +21,6 @@ st.set_page_config(
 # RUTA CORRECTA: El archivo está en la raíz del repositorio
 csv_path = "poems_clean.csv" 
 df = None
-
-# Intentamos cargar el CSV
 try:
     df = pd.read_csv(csv_path)
 except Exception:
@@ -36,8 +34,9 @@ if not HF_TOKEN:
 # =========================
 # CONFIGURACIÓN DEL MODELO Y API
 # =========================
-MODEL_ID = "meta-llama/Meta-Llama-3-8B-Instruct"
-# ¡CORRECCIÓN CRÍTICA! Cambiamos a la nueva URL: router.huggingface.co
+# Mantenemos el modelo original de tu proyecto
+MODEL_ID = "meta-llama/Meta-Llama-3-8B-Instruct" 
+# Usamos la URL correcta del router, sabiendo que fallará con 404 en la capa gratuita.
 API_URL = f"https://router.huggingface.co/models/{MODEL_ID}" 
 
 def hf_generate(prompt, max_tokens=300, temperature=0.9):
@@ -52,12 +51,10 @@ def hf_generate(prompt, max_tokens=300, temperature=0.9):
         }
     }
     
-    # Aumentamos el timeout a 180s para modelos grandes (Llama 3)
     resp = requests.post(API_URL, headers=headers, json=payload, timeout=180) 
     resp.raise_for_status()
     data = resp.json()
     
-    # Procesamiento de la respuesta
     if isinstance(data, list) and data and "generated_text" in data[0]:
         return data[0]["generated_text"]
     
@@ -69,15 +66,12 @@ def hf_generate(prompt, max_tokens=300, temperature=0.9):
 
 st.title("✍️ IA Generativa de Poemas en Español")
 
-st.markdown("""
-Esta aplicación utiliza el modelo **Meta-Llama-3-8B-Instruct** (vía API de Hugging Face)
-para generar poemas originales en español. El modelo se inspira en un dataset de poemas
-existentes para adaptarse a distintos estilos literarios.
+st.markdown(f"""
+Esta aplicación utiliza el modelo **{MODEL_ID}** (vía API de Hugging Face).
 """)
 
 st.subheader("Configuración de la Generación")
 
-# Usamos dos columnas para una mejor disposición visual
 col1, col2 = st.columns(2)
 
 with col1:
@@ -95,9 +89,9 @@ if st.button("✨ Generar Poema", type="primary"):
     if not tema or len(tema.strip()) < 3:
         st.error("Por favor, ingresa un tema válido para la generación.")
     elif not HF_TOKEN:
-        st.error("El token de Hugging Face (HF_TOKEN) es necesario para usar el modelo.")
+        st.error("El token de Hugging Face (HF_TOKEN) es necesario.")
     elif df is None or df.empty:
-        st.error("El dataset de poemas no se cargó correctamente. No se puede generar el prompt.")
+        st.error("El dataset de poemas no se cargó correctamente.")
     else:
         try:
             # 1. Preparar Ejemplos y Prompt
@@ -115,10 +109,9 @@ Ahora escribe el poema:
             
             # 2. Generar el Poema con Feedback Visual (Spinner)
             st.subheader(f"Resultado: Poema '{estilo}' sobre '{tema}'")
-            with st.spinner("⏳ La IA está escribiendo... Esto puede tardar varios segundos debido al tamaño del modelo."):
+            with st.spinner("⏳ La IA está escribiendo... Esto puede tardar varios segundos."):
                 poem = hf_generate(prompt, max_tokens=300, temperature=0.9)
             
-            # Mostrar resultado con formato
             st.success("✅ Generación completada.")
             st.markdown(f"---")
             st.markdown(poem)
@@ -126,16 +119,16 @@ Ahora escribe el poema:
     
         except requests.HTTPError as e:
             status_code = e.response.status_code
-            if status_code == 410:
-                st.error("🚨 **Error 410: URL Obsoleta.** La URL de la API fue actualizada. Por favor, verifica que estés usando 'router.huggingface.co'.")
-            elif status_code == 404:
-                 st.error("❌ **Error 404: Modelo No Encontrado.** El modelo Llama 3 probablemente requiere un Endpoint dedicado.")
+            if status_code == 404:
+                 st.error("❌ **Error 404: Modelo No Encontrado.** El modelo Llama 3 no está disponible en la API pública gratuita. Se requiere un **Endpoint de Infererencia dedicado (pago)** para usar este modelo.")
+            elif status_code == 410:
+                 st.error("🚨 **Error 410: URL Obsoleta.** La URL de la API fue actualizada. Verifica que estés usando 'router.huggingface.co'.")
             elif status_code == 503:
-                 st.error("💔 **Error 503: Servicio no disponible.** El modelo está cargando (Cold Start). Por favor, espera un minuto e inténtalo de nuevo.")
+                 st.error("💔 **Error 503: Servicio no disponible.** El modelo está cargando (Cold Start).")
             else:
                  st.error(f"🚨 Error HTTP de Hugging Face: {status_code} - {e.response.text}")
         except requests.exceptions.Timeout:
-            st.error("⏰ **Error de tiempo de espera (Timeout).** El modelo tardó demasiado en responder. Intenta de nuevo.")
+            st.error("⏰ **Error de tiempo de espera (Timeout).** El modelo tardó demasiado en responder.")
         except Exception as e:
             st.error("🚨 Error inesperado durante la generación.")
             st.code("".join(traceback.format_exception(e)))
@@ -143,15 +136,15 @@ Ahora escribe el poema:
 st.markdown("""
 ---
 ### Estilos Disponibles:
-- **Verso libre**: Poema sin rima ni métrica fija.
-- **Soneto**: 14 versos endecasílabos con rima organizada.
-- **Haiku**: Tres versos breves inspirados en la naturaleza.
-- **Romance**: Versos octosílabos con rima asonante en pares.
-- **Décima**: 10 versos octosílabos con rima ABBAACCDDC.
-- **Oda**: Poema solemne y reflexivo.
-- **Copla**: Estrofa de 4 versos octosílabos con rima en pares.
-- **Elegía**: Poema melancólico sobre la pérdida.
-- **Égloga**: Diálogo bucólico entre pastores.
-- **Lira**: Estrofa de 5 versos con métrica 7-11-7-7-11.
-- **Redondilla**: Estrofa de 4 versos octosílabos con rima ABBA.
+* **Verso libre**: Poema sin rima ni métrica fija.
+* **Soneto**: 14 versos endecasílabos con rima organizada.
+* **Haiku**: Tres versos breves inspirados en la naturaleza.
+* **Romance**: Versos octosílabos con rima asonante en pares.
+* **Décima**: 10 versos octosílabos con rima ABBAACCDDC.
+* **Oda**: Poema solemne y reflexivo.
+* **Copla**: Estrofa de 4 versos octosílabos con rima en pares.
+* **Elegía**: Poema melancólico sobre la pérdida.
+* **Égloga**: Diálogo bucólico entre pastores.
+* **Lira**: Estrofa de 5 versos con métrica 7-11-7-7-11.
+* **Redondilla**: Estrofa de 4 versos octosílabos con rima ABBA.
 """)
