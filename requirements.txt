@@ -1,4 +1,4 @@
 streamlit==1.37.0
-huggingface-hub
+huggingface-hub>=0.23.5
 python-dotenv==1.0.1
 pandas==2.2.2
