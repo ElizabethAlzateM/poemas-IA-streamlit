@@ -16,7 +16,7 @@ st.write("Archivos en raíz:", os.listdir("."))
 HF_TOKEN = os.getenv("HF_TOKEN")
 st.write("HF_TOKEN presente:", bool(HF_TOKEN))
 
-csv_path = "poems_clean.csv"
+csv_path = "main/poems_clean.csv"
 st.write("CSV existe:", os.path.exists(csv_path))
 try:
     df = pd.read_csv(csv_path)
