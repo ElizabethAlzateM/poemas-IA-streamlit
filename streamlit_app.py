@@ -17,17 +17,17 @@ st.set_page_config(
 # =========================
 # DIAGNÓSTICO Y CARGA INICIAL
 # =========================
-# Se usará la ruta corregida: poems_clean.csv (en la raíz)
-csv_path = "poems_clean.csv"
+
+# RUTA CORREGIDA: El archivo está en la raíz del repositorio
+csv_path = "poems_clean.csv" 
 df = None
 
 # Intentamos cargar el CSV
 try:
     df = pd.read_csv(csv_path)
-    # st.sidebar.success(f"Dataset cargado: {len(df)} poemas disponibles.") # Diagnóstico discreto
 except Exception:
-    # Si falla, df será None. El error se mostrará en el sidebar para no detener la app.
     st.sidebar.error("Error: No se pudo cargar poems_clean.csv. Verifica que esté en la raíz.")
+    df = None
     
 HF_TOKEN = os.getenv("HF_TOKEN")
 if not HF_TOKEN:
@@ -37,7 +37,8 @@ if not HF_TOKEN:
 # CONFIGURACIÓN DEL MODELO Y API
 # =========================
 MODEL_ID = "meta-llama/Meta-Llama-3-8B-Instruct"
-API_URL = f"https://api-inference.huggingface.co/models/{MODEL_ID}"
+# URL CORREGIDA: Usamos router.huggingface.co en lugar de api-inference.huggingface.co
+API_URL = f"https://router.huggingface.co/models/{MODEL_ID}" 
 
 def hf_generate(prompt, max_tokens=300, temperature=0.9):
     """Cliente HTTP para Hugging Face API con manejo de errores."""
@@ -51,7 +52,7 @@ def hf_generate(prompt, max_tokens=300, temperature=0.9):
         }
     }
     
-    # Timeout aumentado para modelos grandes como Llama 3
+    # Aumentamos el timeout a 180s para modelos grandes (Llama 3)
     resp = requests.post(API_URL, headers=headers, json=payload, timeout=180) 
     resp.raise_for_status()
     data = resp.json()
@@ -69,9 +70,9 @@ def hf_generate(prompt, max_tokens=300, temperature=0.9):
 st.title("✍️ IA Generativa de Poemas en Español")
 
 st.markdown("""
-Esta aplicación utiliza un modelo de **IA (Meta-Llama-3-8B-Instruct)** a través de la API de Hugging Face
+Esta aplicación utiliza el modelo **Meta-Llama-3-8B-Instruct** (vía API de Hugging Face)
 para generar poemas originales en español. El modelo se inspira en un dataset de poemas
-para replicar distintos estilos literarios.
+existentes para adaptarse a distintos estilos literarios.
 """)
 
 st.subheader("Configuración de la Generación")
@@ -100,7 +101,6 @@ if st.button("✨ Generar Poema", type="primary"):
     else:
         try:
             # 1. Preparar Ejemplos y Prompt
-            # Usamos el 80% del DF para asegurar que la muestra sea representativa si el DF es grande
             ejemplos = df['content'].dropna().sample(min(3, len(df))).tolist()
             ejemplos_texto = "\n".join([f"- {e.strip()[:200]}..." for e in ejemplos])
 
@@ -115,19 +115,19 @@ Ahora escribe el poema:
             
             # 2. Generar el Poema con Feedback Visual (Spinner)
             st.subheader(f"Resultado: Poema '{estilo}' sobre '{tema}'")
-            with st.spinner("⏳ La IA está escribiendo... Esto puede tardar hasta 30 segundos debido al tamaño del modelo."):
+            with st.spinner("⏳ La IA está escribiendo... Esto puede tardar varios segundos debido al tamaño del modelo."):
                 poem = hf_generate(prompt, max_tokens=300, temperature=0.9)
             
-            # Usamos st.markdown para renderizar mejor el poema
+            # Mostrar resultado con formato
             st.success("✅ Generación completada.")
             st.markdown(f"---")
-            st.markdown(f"**{poem}**")
+            st.markdown(poem)
             st.markdown(f"---")
     
         except requests.HTTPError as e:
             status_code = e.response.status_code
             if status_code == 503:
-                 st.error("💔 **Error 503: Servicio no disponible.** El modelo de Llama 3 está cargando (Cold Start). Espera un minuto e inténtalo de nuevo.")
+                 st.error("💔 **Error 503: Servicio no disponible.** El modelo está cargando (Cold Start). Por favor, espera un minuto e inténtalo de nuevo.")
             else:
                  st.error(f"🚨 Error HTTP de Hugging Face: {status_code} - {e.response.text}")
         except requests.exceptions.Timeout:
