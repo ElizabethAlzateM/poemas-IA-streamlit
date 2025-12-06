@@ -37,8 +37,7 @@ if not HF_TOKEN:
 # CONFIGURACIÓN DEL MODELO Y API
 # =========================
 MODEL_ID = "meta-llama/Meta-Llama-3-8B-Instruct"
-# URL CORREGIDA: Usamos router.huggingface.co en lugar de api-inference.huggingface.co
-API_URL = f"https://router.huggingface.co/models/{MODEL_ID}" 
+API_URL = f"https://api-inference.huggingface.co/models/{MODEL_ID}" 
 
 def hf_generate(prompt, max_tokens=300, temperature=0.9):
     """Cliente HTTP para Hugging Face API con manejo de errores."""
