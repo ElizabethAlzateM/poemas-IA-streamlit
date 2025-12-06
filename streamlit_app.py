@@ -2,15 +2,58 @@ import os
 import pandas as pd
 import random
 import streamlit as st
-from huggingface_hub import InferenceClient
+import requests
+import traceback
 
-# Cargamos las variables desde .env
+# =========================
+# Diagnóstico inicial
+# =========================
+st.header("Diagnóstico rápido")
+st.write("Python version:", os.sys.version)
+st.write("Working dir:", os.getcwd())
+st.write("Archivos en raíz:", os.listdir("."))
+
 HF_TOKEN = os.getenv("HF_TOKEN")
+st.write("HF_TOKEN presente:", bool(HF_TOKEN))
+
+csv_path = "poems_clean.csv"
+st.write("CSV existe:", os.path.exists(csv_path))
+try:
+    df = pd.read_csv(csv_path)
+    st.write("CSV cargado: filas =", len(df))
+except Exception as e:
+    st.error(f"Error leyendo CSV: {e}")
+    df = None
+
+# =========================
+# Configuración del modelo
+# =========================
 MODEL_ID = "meta-llama/Meta-Llama-3-8B-Instruct"
+API_URL = f"https://api-inference.huggingface.co/models/{MODEL_ID}"
 
-# Cargamos tu dataset limpio
-df = pd.read_csv("poems_clean.csv")
+def hf_generate(prompt, max_tokens=300, temperature=0.9):
+    """Cliente HTTP para Hugging Face API"""
+    headers = {"Authorization": f"Bearer {HF_TOKEN}"}
+    payload = {
+        "inputs": prompt,
+        "parameters": {
+            "max_new_tokens": max_tokens,
+            "temperature": temperature,
+        }
+    }
+    resp = requests.post(API_URL, headers=headers, json=payload, timeout=120)
+    resp.raise_for_status()
+    data = resp.json()
+    # Manejo flexible de la respuesta
+    if isinstance(data, list) and data and "generated_text" in data[0]:
+        return data[0]["generated_text"]
+    if isinstance(data, dict) and "generated_text" in data:
+        return data["generated_text"]
+    return str(data)
 
+# =========================
+# Interfaz Streamlit
+# =========================
 st.title("📝 IA Generativa de Poemas en Español")
 
 st.markdown("""
@@ -36,21 +79,20 @@ y puede adaptarse a distintos estilos literarios.
 tema = st.text_input("Tema del poema")
 estilo = st.selectbox(
     "Estilo",
-    ["Verso libre","Soneto","Haiku","Romance","Décima","Oda","Copla","Elegía","Égloga","Lira","Redondilla"]
+    ["Verso libre","Soneto","Haiku","Romance","Décima","Oda",
+     "Copla","Elegía","Égloga","Lira","Redondilla"]
 )
 
 if st.button("Generar poema"):
-    if not HF_TOKEN:
-        st.error("No se encontró el token HF_TOKEN. Verifica tu archivo .env.")
-    else:
-        try:
-            client = InferenceClient(MODEL_ID, token=HF_TOKEN)
-
-            # Seleccionamos algunos ejemplos aleatorios del dataset
-            ejemplos = df['content'].dropna().sample(3).tolist()
+    try:
+        if not HF_TOKEN:
+            st.error("No se encontró HF_TOKEN en Secrets. Ve a Settings → Secrets y agrégalo con comillas dobles.")
+        elif df is None:
+            st.error("No se pudo cargar poems_clean.csv.")
+        else:
+            ejemplos = df['content'].dropna().sample(min(3, len(df))).tolist()
             ejemplos_texto = "\n".join([f"- {e.strip()[:200]}" for e in ejemplos])
 
-            # Construimos el prompt con inspiración del dataset
             prompt = f"""
 Eres un poeta experto en español.
 Escribe un poema sobre el tema: "{tema}".
@@ -58,16 +100,13 @@ Estilo: {estilo}.
 Inspírate en el estilo (sin copiar) de estos ejemplos:
 {ejemplos_texto}
 Ahora escribe el poema:
-"""
+""".strip()
 
-            resp = client.chat_completion(
-                messages=[{"role": "user", "content": prompt}],
-                max_tokens=300,
-                temperature=0.9
-            )
-
-            poem = resp.choices[0].message["content"]
+            poem = hf_generate(prompt, max_tokens=300, temperature=0.9)
+            st.subheader("✨ Poema generado:")
             st.write(poem)
-
-        except Exception as e:
-            st.error(f"Error al generar poema: {e}")
+    except requests.HTTPError as e:
+        st.error(f"Error HTTP de Hugging Face: {e.response.status_code} - {e.response.text}")
+    except Exception as e:
+        st.error("Error inesperado en la app")
+        st.code("".join(traceback.format_exception(e)))
