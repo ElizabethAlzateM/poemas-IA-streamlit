@@ -18,7 +18,7 @@ st.set_page_config(
 # DIAGNÓSTICO Y CARGA INICIAL
 # =========================
 
-# RUTA CORREGIDA: El archivo está en la raíz del repositorio
+# RUTA CORRECTA: El archivo está en la raíz del repositorio
 csv_path = "poems_clean.csv" 
 df = None
 
@@ -37,7 +37,8 @@ if not HF_TOKEN:
 # CONFIGURACIÓN DEL MODELO Y API
 # =========================
 MODEL_ID = "meta-llama/Meta-Llama-3-8B-Instruct"
-API_URL = f"https://api-inference.huggingface.co/models/{MODEL_ID}" 
+# ¡CORRECCIÓN CRÍTICA! Cambiamos a la nueva URL: router.huggingface.co
+API_URL = f"https://router.huggingface.co/models/{MODEL_ID}" 
 
 def hf_generate(prompt, max_tokens=300, temperature=0.9):
     """Cliente HTTP para Hugging Face API con manejo de errores."""
@@ -125,7 +126,11 @@ Ahora escribe el poema:
     
         except requests.HTTPError as e:
             status_code = e.response.status_code
-            if status_code == 503:
+            if status_code == 410:
+                st.error("🚨 **Error 410: URL Obsoleta.** La URL de la API fue actualizada. Por favor, verifica que estés usando 'router.huggingface.co'.")
+            elif status_code == 404:
+                 st.error("❌ **Error 404: Modelo No Encontrado.** El modelo Llama 3 probablemente requiere un Endpoint dedicado.")
+            elif status_code == 503:
                  st.error("💔 **Error 503: Servicio no disponible.** El modelo está cargando (Cold Start). Por favor, espera un minuto e inténtalo de nuevo.")
             else:
                  st.error(f"🚨 Error HTTP de Hugging Face: {status_code} - {e.response.text}")
