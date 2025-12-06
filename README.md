@@ -1,7 +1,8 @@
 IA Generativa de Poemas en Español
 
-Esta aplicación utiliza el modelo **Meta-Llama-3-8B-Instruct** y se inspira en un dataset de poemas en español para generar nuevas composiciones en distintos estilos poéticos.  
-El proyecto está desarrollado con **Streamlit** y se conecta a la API de Hugging Face para la generación de texto.
+Esta aplicación utiliza el modelo **tiiuae/falcon-7b-instruct** y se inspira en un dataset de poemas en español para generar nuevas composiciones en distintos estilos poéticos.  
+El proyecto está desarrollado con **Falcon** y se conecta a la API de Hugging Face para la generación de texto.
+El poryecto inicialmente estaba construido de acuerdo al modelo Llama 3, pero al ser de pago no permitió despliegue web.
 
 ---
 
@@ -18,8 +19,7 @@ Instalación:
 Clona el repositorio y entra en la carpeta:
 
 bash
-- git clone https://github.com/ElizabethAlzateM/poemas-IA-streamlit.git
-- cd poemas-IA-streamlit
+- git clone https://github.com/ElizabethAlzateM/IA_Poemas_Falcon.git
 
 Instala las dependencias:
 -pip install -r requirements.txt
@@ -56,5 +56,5 @@ Despliegue en Streamlit:
 
 Créditos
 - Dataset: Spanish Poetry Dataset en Kaggle
-- Modelo: Meta-Llama-3-8B-Instruct en Hugging Face
+- Modelo: tiiuae/falcon-7b-instruct
 - Desarrollo: Proyecto universitario de Elizabeth Alzate Murillo para explorar IA generativa aplicada a la poesía en español.
