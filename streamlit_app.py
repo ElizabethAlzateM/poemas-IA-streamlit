@@ -5,12 +5,11 @@ from dotenv import load_dotenv
 import streamlit as st
 from huggingface_hub import InferenceClient
 
-# Cargar variables desde .env
-load_dotenv()
+# Cargamos las variables desde .env
 HF_TOKEN = os.getenv("HF_TOKEN")
 MODEL_ID = "meta-llama/Meta-Llama-3-8B-Instruct"
 
-# Cargar tu dataset limpio
+# Cargamos tu dataset limpio
 df = pd.read_csv("poems_clean.csv")
 
 st.title("📝 IA Generativa de Poemas en Español")
